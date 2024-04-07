@@ -1,0 +1,93 @@
+---
+title: "Chemical- sites"
+output: html_notebook
+---
+
+```{r}
+#clean the R memory
+rm(list = ls())
+```
+
+```{r}
+#load the water chemicals
+data <- read.table("water_chemicals.tsv", sep = "\t", header = TRUE)
+View(water_chemicals)
+```
+
+```{r}
+# Check for missing values in a data table named 'water_chemicals'
+missing_values <- is.na(data)
+
+# Count missing values by column
+missing_count <- colSums(missing_values)
+
+# Display the count of missing values for each column
+missing_count
+```
+```{r}
+#remove the cas number and chemical names
+data_filt <- data[,-c(1, 2)]
+
+# Transpose the data frame
+data_filt_t <- data.frame(t(data_filt))
+
+# Assign the chemical names row as column names
+colnames(data_filt_t) <- data[, 1]
+
+View(data_filt_t)
+```
+
+```{r}
+# İlk sütun (genellikle örnek isimleri) dışındaki tüm sütunlarda normalizasyon yap
+data_normalized <- data_filt_t
+data_normalized<- scale(data_filt_t) 
+
+# Normalizasyon sonrası veri setini kontrol et
+View(data_normalized)
+```
+
+```{r}
+print(sum(is.na(data_normalized))) # NA değerlerini say
+
+# Eksik veya sonsuz değerleri ortalamayla doldurmak için bir yöntem (veya başka bir yöntem tercih edebilirsiniz)
+
+#eksik değerleri içeren satır/sütunları çıkarma
+
+
+## Eksik veya sonsuz değerler içeren sütunları belirle
+bad_cols <- colSums(is.na(data_normalized) | is.infinite(data_normalized)) > 0
+
+## Bu tür değerler içermeyen sütunları seçerek veri çerçevesini güncelle
+data_normalized <- data_normalized[, !bad_cols]
+
+```
+
+```{r}
+# Gerekli paketi yükle heatmap icin
+if (!requireNamespace("pheatmap", quietly = TRUE)) install.packages("pheatmap")
+library(pheatmap)
+```
+
+```{r}
+# Heatmap oluştur
+heatmap <- pheatmap(data_normalized, 
+         clustering_distance_rows = "euclidean", # Satırlar için kümeleme mesafesi
+         clustering_distance_cols = "euclidean", # Sütunlar için kümeleme mesafesi
+         clustering_method = "complete", # Kümeleme yöntemi
+         color = colorRampPalette(c("blue", "white", "red"))(255), # Renk skalası
+         show_rownames = TRUE, # Satır isimlerini göster (örnek isimleri)
+         show_colnames = TRUE) # Sütun isimlerini göster (kimyasallar)
+print(heatmap)
+
+#Save the graphic
+ggsave("heatmap_waterchemicals.png", plot = heatmap$gtable, width = 12, height = 10, units = "in", dpi = 300)
+
+```
+```{r}
+sum(is.na(data_normalized)) # NA değerlerini say
+
+```
+```{r}
+View(t(data_normalized))
+```
+
